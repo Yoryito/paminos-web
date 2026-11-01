@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>PAMINOS · Registro laboral</title>
+<!-- Instalable en el móvil (PWA) -->
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#0d0d0d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PAMINOS">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon-180.png">
+<link rel="icon" type="image/png" href="./icons/icon-192.png">
+  <script type="module" crossorigin src="./assets/index-DJbLyuu9.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-DYkCSf9y.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <h1>PAMINOS</h1>
+      <div class="sub">Registro laboral</div>
+    </div>
+    <!-- PAMI, el ayudante: pegado al nombre y más grande que el resto, porque
+         es la puerta de entrada a toda la ayuda de la app (pami.js lo llena) -->
+    <button id="pamiBtn" title="Pregúntale a PAMI cualquier duda sobre la app" aria-label="Abrir a PAMI, el ayudante de la app">
+      <span class="pami-btn-cara"></span>
+      <span class="pami-btn-txt">Pregunta a <b>PAMI</b></span>
+    </button>
+    <div class="spacer"></div>
+    <button id="pdfBtn" class="hidden" title="Exportar informe en PDF"><i data-lucide="file-text"></i> Exportar PDF</button>
+    <select id="yearSel" class="hidden" title="Año"></select>
+    <button id="novBtn" class="ghost" title="Qué hay de nuevo en esta versión" aria-label="Ver las novedades de esta versión"><i data-lucide="sparkles"></i></button>
+    <button id="searchBtn" class="ghost" title="Buscar entradas (Ctrl+K)" aria-label="Buscar entradas"><i data-lucide="search"></i></button>
+    <button id="themeBtn" class="ghost" title="Cambiar tema"><i data-lucide="sun"></i></button>
+  </header>
+
+  <div id="banners"></div>
+
+  <nav class="apps">
+    <button data-app="resumen" class="active"><i data-lucide="layout-dashboard"></i> RESUMEN DEL DÍA</button>
+    <button data-app="paminos"><i data-lucide="briefcase"></i> PAMINOS</button>
+    <button data-app="calendario"><i data-lucide="calendar-days"></i> CALENDARIO</button>
+    <button data-app="comparar"><i data-lucide="receipt"></i> COMPARAR NÓMINA</button>
+    <button data-app="ajustes"><i data-lucide="settings"></i> AJUSTES</button>
+    <button data-app="mas"><i data-lucide="plus"></i> MÁS</button>
+    <!-- El mismo PAMI que la cabecera, pero aquí solo su cara: al bajar por la
+         página la cabecera se va y su botón con ella. Esta barra se queda
+         pegada arriba, así que la ayuda nunca se pierde de vista. Aparece solo
+         cuando la barra está pegada (styles.css) para no duplicar el botón. -->
+    <button id="pamiNav" class="pami-nav" title="Pregúntale a PAMI cualquier duda sobre la app" aria-label="Abrir a PAMI, el ayudante de la app"><span class="pami-btn-cara"></span></button>
+  </nav>
+
+  <nav class="tabs hidden" id="paminosTabs">
+    <button data-tab="registro" class="active">Registro</button>
+    <button data-tab="anual">Resumen anual</button>
+    <button data-tab="libranzas">Libranzas</button>
+  </nav>
+
+  <nav class="tabs hidden" id="masTabs">
+    <button data-tab="notas" class="active">Notas</button>
+    <button data-tab="conexiones">Control Central</button>
+  </nav>
+
+  <!-- ============ RESUMEN DEL DÍA ============ -->
+  <section id="tab-resumen" class="panel">
+    <div class="saludo">
+      <div class="saludo-emoji" id="saludoEmoji"><i data-lucide="sun"></i></div>
+      <div>
+        <div class="saludo-title" id="saludoTitle">Hola</div>
+        <div class="saludo-fecha" id="saludoFecha"></div>
+      </div>
+    </div>
+    <div id="resHoy" style="margin-bottom:14px"></div>
+    <div class="tiles" id="resTiles"></div>
+    <div id="resProximo"></div>
+  </section>
+
+  <!-- ============ REGISTRO ============ -->
+  <section id="tab-registro" class="panel hidden">
+    <div class="card" style="margin-bottom:14px">
+      <h2 id="formTitle">Nueva entrada</h2>
+      <div class="grid-form">
+        <div class="field"><label>Fecha</label><input type="date" id="eFecha"></div>
+        <div class="field"><label>Concepto</label><select id="eTipo"></select></div>
+        <div class="field"><label id="eCantLbl">Cantidad</label><input type="number" id="eCant" min="0" step="0.5" value="1"></div>
+        <div class="field" id="eRepeatField"><label>Repetir en días seguidos</label><input type="number" id="eRepeat" min="1" max="90" step="1" value="1"></div>
+        <div class="field" style="grid-column: span 2; min-width: 220px;"><label>Nota (opcional)</label><input type="text" id="eNota" placeholder="p. ej. Semana 3-4, turno especial…"></div>
+        <div style="display:flex; gap:8px">
+          <button class="primary" id="eSave">Añadir</button>
+          <button id="eCancel" class="hidden">Cancelar</button>
+        </div>
+      </div>
+      <div class="muted" id="ePreview" style="margin-top:8px"></div>
+    </div>
+
+    <div class="month-nav">
+      <button id="mPrev"><i data-lucide="chevron-left"></i></button>
+      <div class="mname" id="mName"></div>
+      <button id="mNext"><i data-lucide="chevron-right"></i></button>
+      <button id="mToday" class="ghost">Hoy</button>
+      <div class="spacer"></div>
+      <button id="calcBtn" title="Genera las entradas a partir de los turnos del calendario"><i data-lucide="refresh-cw"></i> Calcular desde el calendario</button>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="card-head">
+          <h2>Resumen del mes</h2>
+          <label class="chk" id="plusNoctWrap" title="Para quien supere el 75 % de horas en horario nocturno">
+            <input type="checkbox" id="plusNoct"> <span id="plusNoctLbl">Plus de Nocturnidad</span>
+          </label>
+        </div>
+        <div id="mAvisos"></div>
+        <div class="table-scroll summary"><table id="mSummary"></table></div>
+        <div class="muted section-gap" id="mSalary"></div>
+      </div>
+      <div class="card">
+        <h2>Entradas del mes</h2>
+        <div class="table-scroll entries"><table id="mEntries"></table></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ANUAL ============ -->
+  <section id="tab-anual" class="panel hidden">
+    <div class="tiles" id="aTiles"></div>
+    <div id="aAvisos"></div>
+    <div class="card">
+      <h2 id="aChartTitle">Ingresos extra por mes (€)</h2>
+      <div class="legend" id="aLegend"></div>
+      <div class="chart-box">
+        <svg id="aChart" width="100%" height="280" role="img" aria-label="Ingresos extra por mes"></svg>
+        <div class="tooltip" id="aTip"></div>
+      </div>
+      <button id="aTableBtn" class="ghost" style="margin-top:8px">Ver tabla de datos</button>
+      <div class="table-scroll hidden" id="aTableWrap" style="margin-top:8px"><table id="aTable"></table></div>
+    </div>
+  </section>
+
+  <!-- ============ LIBRANZAS ============ -->
+  <section id="tab-libranzas" class="panel hidden">
+    <div class="tiles" id="lTiles"></div>
+    <div class="card" style="margin-bottom:14px">
+      <h2>Registrar festivo</h2>
+      <div class="grid-form">
+        <div class="field"><label>Fecha del festivo</label><input type="date" id="fFecha"></div>
+        <div class="field"><label>Tipo</label><select id="fTipo">
+          <option value="trabajado">Trabajado</option>
+          <option value="parcial">Trabajado a medias</option>
+          <option value="librado">Librado</option>
+          <option value="semana-santa">Semana Santa</option>
+          <option value="navidad">Navidad</option>
+        </select></div>
+        <div class="field"><label id="fDiasLbl">Días generados</label><input type="number" id="fDias" min="0" step="1"></div>
+        <div><button class="primary" id="fAdd">Añadir festivo</button></div>
+      </div>
+      <div class="muted" style="margin-top:8px" id="fHint"></div>
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <h2>Días disponibles · elige qué hacer con ellos</h2>
+      <div class="muted" id="poolInfo"></div>
+      <div class="pool-groups" id="poolChips"></div>
+      <div class="festivo-actions">
+        <div class="fecha-box" onclick="abrirFecha(event)" title="Fecha en la que se apunta el cobro">
+          <span class="fecha-box-lbl"><i data-lucide="calendar-days"></i> Fecha del cobro</span>
+          <input type="date" id="poolFecha">
+        </div>
+        <button id="poolDisf" onclick="poolDisfrutar()"><i data-lucide="umbrella"></i> Disfrutar</button>
+        <button id="poolCob" onclick="poolCobrar()"><i data-lucide="banknote"></i> Cobrar</button>
+      </div>
+      <div class="muted section-gap">Marca los días que quieras usar. El cobro va siempre de dos en dos (un festivo completo) y se apunta en la fecha del selector, así que suma en los ingresos de ese mes; puedes emparejar días sueltos de festivos distintos. Al disfrutar se abre un calendario para elegir cada día uno a uno — seguidos o salteados, como te convenga.</div>
+    </div>
+    <div class="card">
+      <h2>Historial de festivos</h2>
+      <div class="muted" style="margin-bottom:10px">Aquí solo se consulta. Para disfrutar o cobrar días, usa la bolsa de arriba. La «×» de cada etiqueta deshace ese uso y devuelve el día a la bolsa.</div>
+      <div id="fList"></div>
+    </div>
+  </section>
+
+  <!-- ============ AJUSTES ============ -->
+  <section id="tab-ajustes" class="panel hidden">
+
+    <div class="settings-group">
+      <h3>Tu nombre</h3>
+      <div class="card">
+        <h2>Cómo te llamas</h2>
+        <div class="grid-form">
+          <div class="field" style="grid-column: span 2; min-width: 240px">
+            <label>Tu nombre</label>
+            <input type="text" id="cfgNombre" maxlength="40" placeholder="Tu nombre y apellidos">
+          </div>
+          <div><button class="primary" id="nomSave">Guardar nombre</button> <span class="muted" id="nomMsg"></span></div>
+        </div>
+        <div class="muted section-gap">Va en la <b>cabecera de los informes PDF</b> («RESUMEN PAMINOS · tu nombre») y en el nombre del archivo, para que se sepa de quién es el papel sin tener que preguntarlo: ahí interesan el <b>nombre y los apellidos</b>. En el saludo del Resumen del día sale <b>solo el nombre</b>. Déjalo en blanco si prefieres que no aparezca en ningún sitio.</div>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <h3>Dinero y reglas de PAMINOS</h3>
+      <div class="grid2">
+        <div class="card">
+          <h2>Tarifas (€)</h2>
+          <div class="grid-form" id="ratesForm"></div>
+          <div class="muted section-gap">Los importes de todas las vistas se recalculan con estas tarifas.</div>
+        </div>
+        <div class="card">
+          <h2>Libranzas</h2>
+          <div class="grid-form">
+            <div class="field"><label>Días por festivo trabajado</label><input type="number" id="cfgGen" min="0" step="1"></div>
+            <div class="field"><label>Días por festivo librado</label><input type="number" id="cfgLib" min="0" step="1"></div>
+            <div class="field"><label>Meses hasta poder decidir</label><input type="number" id="cfgDec" min="1" step="1"></div>
+          </div>
+          <div class="muted section-gap">Todos los días de libranza caducan el 1 de enero del año siguiente al festivo. El aviso para gastarlos o cobrarlos salta automáticamente el 1 de octubre (3 meses antes).</div>
+          <div style="margin-top:12px"><button class="primary" id="cfgSave">Guardar ajustes</button> <span class="muted" id="cfgMsg"></span></div>
+        </div>
+      </div>
+      <div class="card section-gap">
+        <h2>Tu jornada</h2>
+        <div class="grid-form">
+          <div class="field"><label>Horas de trabajo a la semana</label><input type="number" id="jorSemana" min="1" max="80" step="0.5"></div>
+          <div class="field"><label>Horas por turno (un día normal)</label><input type="number" id="jorTurno" min="1" max="24" step="0.5"></div>
+          <div class="field"><label>Máximo por día (a partir de ahí, extra)</label><input type="number" id="jorMaxDia" min="1" max="24" step="0.5"></div>
+          <div><button class="primary" id="jorSave">Guardar jornada</button> <span class="muted" id="jorMsg"></span></div>
+        </div>
+        <div class="muted section-gap" id="jorHint"></div>
+      </div>
+    </div>
+
+    <div class="settings-group" id="grupoCalendario">
+      <h3>Calendario: turnos, vacaciones, colores, festivos y eventos</h3>
+      <div class="card">
+        <h2>Turnos de trabajo</h2>
+        <div id="turnosList"></div>
+        <div class="grid-form" style="margin-top:12px">
+          <div class="field"><label>Nombre</label><input type="text" id="tNombre" placeholder="p. ej. Mañana"></div>
+          <div class="field"><label>Hora inicio</label><input type="time" id="tInicio" value="06:00"></div>
+          <div class="field"><label>Hora fin</label><input type="time" id="tFin" value="14:00"></div>
+          <div style="display:flex; gap:8px">
+            <button class="primary" id="tAdd">Añadir turno</button>
+            <button id="tCancel" class="hidden">Cancelar</button>
+          </div>
+        </div>
+        <div class="muted section-gap">Define tus turnos habituales para asignarlos rápidamente a los días de trabajo.</div>
+      </div>
+      <div class="grid2 section-gap">
+        <div class="card">
+          <h2>Vacaciones</h2>
+          <div class="grid-form">
+            <div class="field"><label>Días de V. Verano al año</label><input type="number" id="vacAno" min="0" step="1"></div>
+            <div><button class="primary" id="vacSave">Guardar</button> <span class="muted" id="vacMsg"></span></div>
+          </div>
+          <div class="muted section-gap" id="vacResumen"></div>
+        </div>
+        <div class="card">
+          <h2>Tipos de día y colores</h2>
+          <div id="tiposDiaList"></div>
+          <div style="margin-top:12px"><button class="primary" id="tiposSave">Guardar cambios</button> <span class="muted" id="tiposMsg"></span></div>
+          <div class="muted section-gap">Personaliza el nombre y el color de cada grupo. «Festivo» y las libranzas disfrutadas (como «Libre») se marcan automáticamente desde PAMINOS.</div>
+          <div class="ubi-box">
+            <label for="ubiSel"><i data-lucide="map-pin"></i> Festivos de tu zona</label>
+            <div class="ubi-fila">
+              <select id="ubiSel"></select>
+              <button id="ubiDetectar" class="ghost" title="Preguntar al ordenador dónde estás"><i data-lucide="locate-fixed"></i> Detectar</button>
+            </div>
+            <label class="chk" style="margin-top:8px"><input type="checkbox" id="ubiMostrar"> Marcar los festivos oficiales en el calendario</label>
+            <div class="muted" id="ubiMsg" style="margin-top:8px"></div>
+            <div class="muted section-gap">Se marcan los festivos <b>nacionales</b> y los de la comunidad que elijas. Los <b>dos festivos locales</b> de cada pueblo no salen en ninguna lista general: esos los añades tú en «Mis fiestas y eventos». Cada año el calendario oficial cambia algún día suelto, así que compruébalo con el de tu empresa antes de fiarte del todo.</div>
+          </div>
+        </div>
+      </div>
+      <div class="card section-gap">
+        <h2>Mis fiestas y eventos</h2>
+        <div id="marcasList"></div>
+        <div class="grid-form" style="margin-top:12px">
+          <div class="field"><label>Nombre</label><input type="text" id="mNombre" placeholder="p. ej. Fiestas de mi pueblo"></div>
+          <div class="field"><label>Empieza el</label><input type="date" id="mFecha"></div>
+          <div class="field"><label>Termina el <span class="muted">(si dura varios días)</span></label><input type="date" id="mFin"></div>
+          <div class="field"><label>Color</label><input type="color" id="mColor" value="#5eb0ef"></div>
+          <div class="field"><label class="check"><input type="checkbox" id="mAnual" checked> Se repite cada año</label></div>
+          <div class="field" style="grid-column: span 2; min-width: 260px">
+            <label>¿Cuenta como vacaciones?</label>
+            <select id="mOcupa"></select>
+          </div>
+          <div style="display:flex; gap:8px">
+            <button class="primary" id="mAdd">Añadir evento</button>
+            <button id="mCancel" class="hidden">Cancelar</button>
+          </div>
+        </div>
+        <div class="muted" id="mOcupaHint" style="margin-top:8px"></div>
+        <div class="muted section-gap">Las fiestas de tu pueblo, el patrón de la emisora, un cumpleaños, una boda, una semana de curso… Aparecen en el calendario con su color y su nombre, y pueden durar <b>varios días</b>. Si además <b>te coges esos días</b>, dilo arriba: se marcan solos en el calendario y se descuentan de la bolsa que elijas, igual que si los marcaras a mano. Si un evento te da <b>libranzas</b> (por ser festivo trabajado), eso se sigue apuntando en <b>PAMINOS › Libranzas</b>.</div>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <h3>Copias de seguridad y datos</h3>
+      <div class="grid2">
+        <div class="card">
+          <h2>Exportar</h2>
+          <div style="display:flex; gap:8px; flex-wrap:wrap">
+            <button id="expCsv">CSV entradas (Excel)</button>
+            <button id="expCsvFest">CSV libranzas (Excel)</button>
+            <button id="expJson">Copia de seguridad (JSON)</button>
+          </div>
+          <div class="muted section-gap">Los CSV se abren directamente en Excel (separador «;», decimales con coma).</div>
+        </div>
+        <div class="card">
+          <h2>Importar / restablecer</h2>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center">
+            <button id="impBtn">Restaurar copia JSON…</button>
+            <input type="file" id="impJson" accept=".json" class="hidden">
+            <button class="danger" id="wipeBtn">Borrar todos los datos</button>
+          </div>
+          <div class="muted section-gap">Los datos se guardan automáticamente en este navegador. Haz una copia JSON de vez en cuando por seguridad.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <h3>Esta versión de PAMINOS</h3>
+      <div class="card">
+        <h2 id="novVersionTxt">PAMINOS</h2>
+        <div style="display:flex; gap:8px; flex-wrap:wrap">
+          <button id="novVerBtn"><i data-lucide="sparkles"></i> Ver las novedades</button>
+        </div>
+        <div class="muted section-gap">Cada vez que la app se actualiza te enseño lo que ha cambiado. Aquí puedes volver a leerlo cuando quieras, incluso lo de versiones anteriores.</div>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <h3>Atajos de teclado</h3>
+      <div class="card">
+        <div class="atajos">
+          <div><kbd>Ctrl</kbd>+<kbd>Z</kbd><span>Deshacer el último cambio (se pueden encadenar varios)</span></div>
+          <div><kbd>Ctrl</kbd>+<kbd>Y</kbd><span>Rehacer lo que acabas de deshacer (o <kbd>Ctrl</kbd>+<kbd>Mayús</kbd>+<kbd>Z</kbd>)</span></div>
+          <div><kbd>Ctrl</kbd>+<kbd>K</kbd><span>Abrir el buscador desde cualquier sección</span></div>
+          <div><kbd>Alt</kbd>+<kbd>1</kbd>…<kbd>6</kbd><span>Saltar entre las secciones de arriba</span></div>
+          <div><kbd>Esc</kbd><span>Cerrar cualquier ventana</span></div>
+          <div><kbd>Enter</kbd><span>Guardar o aceptar: en un formulario y también en cualquier ventana que se abra (incluida la de la nube)</span></div>
+          <div><kbd>Tab</kbd><span>Moverse entre campos y botones</span></div>
+          <div><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd><span>En el calendario, moverse de día en día (↑↓ una semana)</span></div>
+          <div><kbd>Enter</kbd><span>En un día del calendario, abrirlo para editarlo</span></div>
+        </div>
+        <h3 class="atajos-sub">Marcar varias cosas a la vez</h3>
+        <div class="atajos">
+          <div><kbd>Ctrl</kbd>+clic<span>Marcar o desmarcar de uno en uno (días del calendario o notas)</span></div>
+          <div><kbd>Mayús</kbd>+clic<span>Marcar un tramo entero: del primero que marcaste al que pulses, con todo lo de en medio</span></div>
+          <div>clic<span>Un clic normal desmarca todo lo demás</span></div>
+          <div><kbd>Enter</kbd><span>Con varios días marcados, abrir el editor para <b>ponerles lo mismo a todos</b> de una vez</span></div>
+          <div><kbd>Supr</kbd><span>Borrar de golpe todo lo que esté marcado (con su Deshacer, como siempre)</span></div>
+          <div><kbd>Esc</kbd><span>Quitar las marcas sin borrar nada</span></div>
+        </div>
+        <h3 class="atajos-sub">Escribiendo una nota</h3>
+        <div class="atajos">
+          <div><kbd>Ctrl</kbd>+<kbd>B</kbd><span>Poner en <b>negrita</b> lo que tengas seleccionado</span></div>
+          <div><kbd>Ctrl</kbd>+<kbd>U</kbd><span>Subrayar lo que tengas seleccionado</span></div>
+        </div>
+        <div class="muted section-gap">La app se puede manejar entera sin ratón. En el buscador, las flechas recorren los resultados y Enter abre el primero.<br>
+          Ctrl+Z deshace cualquier cambio (añadir, borrar, editar, tocar ajustes), uno detrás de otro hasta el principio de la sesión. Mientras escribes en un campo de texto no actúa: ahí Ctrl+Z corrige lo escrito, como en cualquier sitio.</div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ============ CALENDARIO ============ -->
+  <section id="tab-calendario" class="panel hidden">
+    <div class="tiles" id="calTiles"></div>
+    <div class="card" style="margin-bottom:14px">
+      <div class="month-nav" style="margin-bottom:10px">
+        <button id="cPrev"><i data-lucide="chevron-left"></i></button>
+        <div class="mname" id="cName"></div>
+        <button id="cNext"><i data-lucide="chevron-right"></i></button>
+        <button id="cToday" class="ghost">Hoy</button>
+        <div class="spacer"></div>
+        <button id="calCopiarBtn" title="Rellena los días vacíos repitiendo lo de hace 4 semanas"><i data-lucide="copy"></i> Copiar mes anterior</button>
+        <button id="calAjustesBtn" class="ghost" title="Configura turnos, vacaciones, colores y tus fiestas"><i data-lucide="settings"></i> Ajustes de Calendario</button>
+      </div>
+      <div class="legend" id="calLegend"></div>
+      <div class="cal-grid" id="calGrid"></div>
+      <!-- Aviso de lo que hay marcado: solo se ve cuando hay algo marcado -->
+      <div id="calSelBar" class="sel-bar hidden"></div>
+      <div class="muted atajo-pista"><kbd>Ctrl</kbd>+clic marca días sueltos · <kbd>Mayús</kbd>+clic marca un tramo entero · con varios marcados les pones <b>el mismo turno de una vez</b> (o <kbd>Supr</kbd> para quitarlos todos)</div>
+      <div class="muted section-gap">Pulsa un día para marcarlo: trabajo (con turno y horas), descanso, libre, vacaciones o baja. Los festivos de PAMINOS aparecen como insignia y no ocupan el día: puedes marcar tu turno encima. Las libranzas disfrutadas entran solas como «Libre», y también puedes añadir días libres a mano.</div>
+    </div>
+  </section>
+
+  <!-- ============ +MÁS › NOTAS ============
+       El apartado que abre la sección (es el de uso más general). -->
+  <section id="tab-notas" class="panel hidden">
+    <div class="card" style="margin-bottom:14px">
+      <h2 id="nFormTitle">Nueva nota</h2>
+      <div class="field"><label>Título</label><input type="text" id="nTitulo" placeholder="p. ej. Claves del Prontonet"></div>
+      <!-- El texto de la nota admite formato: es un cuadro editable de verdad,
+           no un <textarea>, para que Ctrl+B y Ctrl+U pongan la negrita y el
+           subrayado AHÍ MISMO, como en cualquier procesador de textos. -->
+      <div class="field" style="margin-top:10px">
+        <label for="nTexto">Texto</label>
+        <div id="nTexto" class="editor-rico" contenteditable="true" role="textbox" aria-multiline="true"
+             aria-label="Texto de la nota"
+             data-vacio="Lo que quieras tener a mano: teléfonos, claves, un procedimiento que nunca recuerdas…"></div>
+      </div>
+      <div class="muted atajo-pista"><kbd>Ctrl</kbd>+<kbd>B</kbd> negrita · <kbd>Ctrl</kbd>+<kbd>U</kbd> subrayado</div>
+      <div style="display:flex; gap:8px; margin-top:12px">
+        <button class="primary" id="nSave">Guardar nota</button>
+        <button id="nCancel" class="hidden">Cancelar</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Mis notas</h2>
+        <input type="text" id="nFiltro" placeholder="Buscar…" style="max-width:200px; margin-bottom:12px">
+      </div>
+      <div id="nLista"></div>
+      <div id="notaSelBar" class="sel-bar hidden"></div>
+      <div class="muted atajo-pista">Pincha una nota para marcarla · <kbd>Ctrl</kbd>+clic marca varias · <kbd>Mayús</kbd>+clic marca un tramo · <kbd>Supr</kbd> borra las marcadas</div>
+      <div class="muted section-gap">Las notas que fijes con la chincheta suben arriba del todo. Se guardan con el resto de tus datos, así que entran en la copia de seguridad y viajan a tus otros aparatos igual que lo demás.</div>
+    </div>
+  </section>
+
+  <!-- ============ +MÁS › CONTROL CENTRAL (conexiones del día) ============
+       Esto no va del convenio ni de la nómina: es la libreta del turno. Cada
+       conexión que entra, a qué estudio va, por dónde llega y cómo se rutea
+       por la matriz. Se organiza POR DÍA, como una escaleta. -->
+  <section id="tab-conexiones" class="panel hidden">
+    <div class="card" style="margin-bottom:14px">
+      <div class="month-nav" style="margin-bottom:12px">
+        <button id="xPrev" title="Día anterior"><i data-lucide="chevron-left"></i></button>
+        <div class="mname" id="xName"></div>
+        <button id="xNext" title="Día siguiente"><i data-lucide="chevron-right"></i></button>
+        <button id="xToday" class="ghost">Hoy</button>
+        <div class="spacer"></div>
+        <span class="muted" id="xCuenta"></span>
+      </div>
+      <h2 id="xFormTitle">Nueva conexión</h2>
+      <div class="grid-form">
+        <div class="field"><label>Hora prevista</label><input type="time" id="xHora"></div>
+        <div class="field"><label>Estudio</label><select id="xEstudio"></select></div>
+        <div class="field"><label>Método de conexión</label><select id="xMetodo"></select></div>
+        <div class="field hidden" id="xOtroField"><label>¿Cuál?</label><input type="text" id="xOtro" placeholder="p. ej. Tieline"></div>
+        <div class="field" style="grid-column: span 2; min-width: 240px"><label>Ruteo por la matriz y notas</label><input type="text" id="xNota" placeholder="p. ej. entra por la 12 → sale al 3 · pedir prueba antes"></div>
+        <div style="display:flex; gap:8px">
+          <button class="primary" id="xSave">Añadir</button>
+          <button id="xCancel" class="hidden">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Conexiones de este día</h2>
+      <div id="xLista"></div>
+      <div class="muted section-gap">Se ordenan solas por hora. Marca <b>Probada</b> en cuanto la hayas comprobado y <b>Vencida</b> cuando ya haya pasado: la fila se apaga y sabes de un vistazo lo que te queda por delante. Si añades un método que no está en la lista, se guarda para la próxima vez.</div>
+    </div>
+
+    <!-- ---------- La agenda de técnicos por provincia ----------
+         Esto NO va por días como la escaleta de arriba: es un fichero que se
+         va llenando poco a poco, según vas conociendo a quién tienes al otro
+         lado en cada provincia y de qué emisora es. -->
+    <div class="card section-gap" id="tecForm" style="margin-bottom:14px">
+      <h2 id="tecFormTitle">Nuevo técnico</h2>
+      <div class="grid-form">
+        <div class="field"><label>Nombre</label><input type="text" id="tecNombre" placeholder="Cómo se llama"></div>
+        <div class="field"><label>Provincia</label><select id="tecProvincia"></select></div>
+        <div class="field"><label>Teléfono o extensión</label><input type="text" id="tecTel" placeholder="Si lo sabes"></div>
+        <div class="field" style="grid-column: span 2; min-width: 240px"><label>Emisora</label>
+          <div class="tec-emisoras">
+            <label class="chk"><input type="checkbox" id="tecOCR"> Onda Cero <span class="tec-sigla ocr">OCR</span></label>
+            <label class="chk"><input type="checkbox" id="tecEFM"> Europa FM <span class="tec-sigla efm">EFM</span></label>
+            <label class="chk"><input type="checkbox" id="tecMFM"> Melodía FM <span class="tec-sigla mfm">MFM</span></label>
+          </div>
+        </div>
+        <div class="field" style="grid-column: span 2; min-width: 240px"><label>Nota</label><input type="text" id="tecNota" placeholder="p. ej. turno de mañanas · pregunta siempre por él para las conexiones"></div>
+        <div style="display:flex; gap:8px">
+          <button class="primary" id="tecSave">Añadir</button>
+          <button id="tecCancel" class="hidden">Cancelar</button>
+        </div>
+      </div>
+      <div class="muted section-gap">Solo el nombre hace falta; lo demás lo puedes ir completando otro día, según te vayas enterando.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Técnicos por provincia</h2>
+        <input type="text" id="tecFiltro" placeholder="Buscar…" style="max-width:200px; margin-bottom:12px">
+      </div>
+      <div id="tecLista"></div>
+      <div class="muted section-gap">Se agrupan solos por provincia. El buscador mira el nombre, la provincia, la emisora, el teléfono y la nota, así que puedes escribir <b>EFM</b> y ver de un tirón a todos los de Europa FM.</div>
+    </div>
+  </section>
+
+  <!-- ============ COMPARAR NÓMINA ============ -->
+  <section id="tab-comparar" class="panel hidden">
+    <div class="month-nav" style="margin-bottom:14px">
+      <button id="nPrev"><i data-lucide="chevron-left"></i></button>
+      <div class="mname" id="nName"></div>
+      <button id="nNext"><i data-lucide="chevron-right"></i></button>
+      <button id="nToday" class="ghost">Hoy</button>
+    </div>
+    <div id="comparHead"></div>
+    <div class="card">
+      <div class="table-scroll"><table id="comparTable"></table></div>
+    </div>
+    <div class="muted section-gap" id="comparNota"></div>
+  </section>
+
+  <footer>
+    <span id="storageHint">Datos guardados localmente en tu navegador · </span><span id="lastSaved"></span>
+    <div class="copyright">© Diseño de Jorge Aguilera Villegas</div>
+  </footer>
+</div>
+
+<!-- ============ MODAL EXPORTAR PDF ============ -->
+<div class="overlay hidden" id="pdfOverlay">
+  <div class="modal">
+    <h3><i data-lucide="file-text"></i> Exportar informe PDF</h3>
+    <label class="opt"><input type="radio" name="pdfScope" value="mes" checked>
+      <div class="opt-body">
+        <div class="opt-title">Resumen de un mes</div>
+        <div class="opt-ctrl">
+          <select id="pdfMes"></select>
+          <select id="pdfMesAno"></select>
+        </div>
+      </div>
+    </label>
+    <label class="opt"><input type="radio" name="pdfScope" value="periodo">
+      <div class="opt-body">
+        <div class="opt-title">Periodo determinado</div>
+        <div class="opt-ctrl">
+          <input type="date" id="pdfDesde"> <span class="muted">a</span> <input type="date" id="pdfHasta">
+        </div>
+      </div>
+    </label>
+    <label class="opt"><input type="radio" name="pdfScope" value="ano">
+      <div class="opt-body">
+        <div class="opt-title">Año completo</div>
+        <div class="opt-ctrl"><select id="pdfAno"></select></div>
+      </div>
+    </label>
+    <label class="chk"><input type="checkbox" id="pdfEur"> Incluir importes en euros</label>
+    <div class="foot">
+      <button id="pdfCancel">Cancelar</button>
+      <button class="primary" id="pdfGo">Generar PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL ELEGIR DÍAS DE DISFRUTE ============ -->
+<div class="overlay hidden" id="pickOverlay">
+  <div class="modal">
+    <h3 id="pickTitle">Elige los días</h3>
+    <div class="month-nav" style="margin-bottom:10px">
+      <button id="pkPrev"><i data-lucide="chevron-left"></i></button>
+      <div class="mname" id="pkName" style="min-width:150px; font-size:15px"></div>
+      <button id="pkNext"><i data-lucide="chevron-right"></i></button>
+    </div>
+    <div class="cal-grid pick-grid" id="pkGrid"></div>
+    <div class="muted" id="pkInfo" style="margin-top:10px"></div>
+    <div class="foot">
+      <button id="pkCancel">Cancelar</button>
+      <button class="primary" id="pkOk" disabled>Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL CALCULAR DESDE EL CALENDARIO ============ -->
+<div class="overlay hidden" id="calcOverlay">
+  <div class="modal">
+    <h3 id="calcTitle"><i data-lucide="refresh-cw"></i> Calcular desde el calendario</h3>
+    <div id="calcBody"></div>
+    <div class="foot">
+      <button id="calcCancel">Cancelar</button>
+      <button class="primary" id="calcOk">Aplicar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL DESCANSOS SEMANALES ============ -->
+<div class="overlay hidden" id="descOverlay">
+  <div class="modal">
+    <h3><i data-lucide="bed"></i> ¿Cuáles son tus descansos semanales?</h3>
+    <div class="muted" id="descInfo"></div>
+    <div class="pool-chips" id="descChips"></div>
+    <div class="muted" id="descHint" style="margin-top:8px"></div>
+    <div class="foot">
+      <button id="descCancel">Cancelar</button>
+      <button class="primary" id="descOk" disabled>Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL AVISO EXCESO DE VACACIONES ============ -->
+<div class="overlay hidden" id="excOverlay">
+  <div class="modal">
+    <h3><i data-lucide="triangle-alert"></i> Te estás pasando de los días de vacaciones</h3>
+    <div id="excBody"></div>
+    <div class="foot">
+      <button id="excCancel">Cancelar</button>
+      <button class="primary" id="excOk">Continuar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: TRABAJAR EN UN DÍA DE TU LIBRANZA (ART. 38.G) ============ -->
+<div class="overlay hidden" id="libOverlay">
+  <div class="modal">
+    <h3><i data-lucide="briefcase"></i> Ese día lo tenías de libranza</h3>
+    <div id="libBody"></div>
+    <div class="foot">
+      <button id="libCancel">Cancelar</button>
+      <span style="flex:1"></span>
+      <button id="libError">Me equivoqué al marcar la libranza</button>
+      <button class="primary" id="libOk">Sí, me llamaron a trabajar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ EL SIMULADOR DE PAMI ============ -->
+<div class="overlay hidden" id="simOverlay">
+  <div class="modal sim-modal">
+    <div class="sim-cab">
+      <h3><i data-lucide="zap"></i> <span id="simTitulo">El simulador de PAMI</span></h3>
+      <span class="sim-etiqueta"><i data-lucide="info"></i> Calendario de mentira · tus datos no se tocan</span>
+      <button class="ghost" id="simCerrar" title="Cerrar (Esc)" aria-label="Cerrar"><i data-lucide="x"></i></button>
+    </div>
+    <div id="simBody"></div>
+    <div class="foot">
+      <button id="simMio"><i data-lucide="copy"></i> Traerme mi mes de verdad</button>
+      <span style="flex:1"></span>
+      <button id="simOtra"><i data-lucide="layout-dashboard"></i> Otra situación</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: QUÉ HAY DE NUEVO (novedades de la versión) ============ -->
+<div class="overlay hidden" id="novOverlay">
+  <div class="modal nov-modal">
+    <h3><i data-lucide="sparkles"></i> <span id="novTitulo">Qué hay de nuevo</span></h3>
+    <div id="novBody"></div>
+    <div class="foot">
+      <!-- Solo se enseñan las últimas versiones; el resto están en la página de
+           descargas, que es donde vive el historial completo. -->
+      <button class="ghost" id="novTodas"><i data-lucide="external-link"></i> Ver todas las versiones</button>
+      <button class="primary" id="novOk">Entendido</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: REGLAS DEL ART. 40 (CÓMO SE PARTEN LAS VACACIONES) ============ -->
+<div class="overlay hidden" id="vacRegOverlay">
+  <div class="modal">
+    <h3><i data-lucide="umbrella"></i> Ojo con cómo empiezan estas vacaciones</h3>
+    <div id="vacRegBody"></div>
+    <div class="foot">
+      <button id="vacRegCancel">Volver y cambiarlo</button>
+      <button class="primary" id="vacRegOk">Seguir igualmente</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL DÍA DE CALENDARIO ============ -->
+<div class="overlay hidden" id="dayOverlay">
+  <div class="modal">
+    <h3 id="dayTitle">Día</h3>
+    <div class="grid-form">
+      <div class="field"><label>Tipo de día</label><select id="dayTipo"></select></div>
+      <div class="field" id="dayTurnoField"><label>Turno</label><select id="dayTurno"></select></div>
+      <div class="field" id="dayIniField"><label>Hora inicio</label><input type="time" id="dayIni"></div>
+      <div class="field" id="dayFinField"><label>Hora fin</label><input type="time" id="dayFin"></div>
+    </div>
+    <div class="field" style="margin-top:10px"><label>Nota (opcional)</label><input type="text" id="dayNota" placeholder="p. ej. cambio de turno con…"></div>
+    <!-- Repetir no tiene sentido cuando se están editando varios días marcados:
+         ahí los días ya los ha elegido el usuario en el calendario. -->
+    <div class="field" id="dayRepeatField" style="margin-top:10px"><label>Repetir en días seguidos (incluido este)</label><input type="number" id="dayRepeat" min="1" max="90" step="1" value="1"></div>
+    <div class="muted" id="dayInfo" style="margin-top:8px"></div>
+    <div class="foot">
+      <button class="danger" id="dayClear">Quitar día</button>
+      <span style="flex:1"></span>
+      <button id="dayCancel">Cancelar</button>
+      <button class="primary" id="daySave">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ BUSCADOR DE ENTRADAS ============ -->
+<div class="overlay hidden" id="searchOverlay">
+  <div class="modal search-modal">
+    <div class="search-box">
+      <span class="search-ico" aria-hidden="true"><i data-lucide="search"></i></span>
+      <input type="text" id="searchInput" autocomplete="off" placeholder="Concepto, nota, mes o año… p. ej. «nocturna junio» o «turno especial»">
+      <button class="ghost" id="searchClose" title="Cerrar (Esc)" aria-label="Cerrar buscador"><i data-lucide="x"></i></button>
+    </div>
+    <div class="muted search-meta" id="searchMeta"></div>
+    <div class="search-results" id="searchResults"></div>
+  </div>
+</div>
+
+<!-- ============ AVISO FLOTANTE «DESHACER» ============ -->
+<div class="undo-toast hidden" id="undoToast" role="status" aria-live="polite">
+  <span class="undo-msg" id="undoMsg"></span>
+  <button class="undo-btn" id="undoBtn"><i data-lucide="undo-2"></i> Deshacer</button>
+</div>
+
+</body>
+</html>
